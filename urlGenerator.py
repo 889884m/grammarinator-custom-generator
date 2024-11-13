@@ -66,7 +66,6 @@ class urlGenerator(Generator):
                 elif choice0 == 1:
                     UnlexerRule(src='/', parent=current)
                     self.phrase(parent=current)
-                    UnlexerRule(src='/', parent=current)
                     self.path(parent=current)
             return current
     path.min_depth = 2

@@ -7,7 +7,7 @@ url : scheme subdomain body tld path?;
 
 body : TEXT '.' ;
 tld : 'com' | 'org' | 'net' | 'gov' | phrase '.' ;
-path : '/' phrase | '/' phrase '/' path ;
+path : '/' phrase | '/' phrase path ;
 phrase : TEXT | TEXT phrase ;
 
 TEXT : [a-z]+ | [0-9]+ | [a-z] TEXT | [0-9] TEXT ; 

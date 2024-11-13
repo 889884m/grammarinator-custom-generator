@@ -15,6 +15,9 @@ with open(join(dirname(__file__), 'tld_list.json')) as f:
 with open(join(dirname(__file__), 'scheme_list.json')) as f:
     schemes = json.load(f)
 
+# with open(join(dirname(__file__), 'subdomain.json')) as f:
+#     schemes = json.load(f)
+
 
 class customUrlGenerator(urlGenerator):
     tld_list = tld_list  # Class attribute to hold the TLD list
@@ -32,4 +35,10 @@ class customUrlGenerator(urlGenerator):
             name += "://"
             UnlexerRule(src=name, parent=current)
             return current
+
+    # def subdomain(self, parent=None):
+    #     with RuleContext(self, UnparserRule(name='subdomain', parent=parent)) as current:
+    #         subdomain = random.choice(subdomains)
+    #         UnlexerRule(src=subdomain, parent=current)
+    #         return current
 
