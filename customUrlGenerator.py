@@ -7,7 +7,7 @@ from grammarinator.runtime import RuleContext, UnparserRule, UnlexerRule
 
 from urlGenerator import urlGenerator
 
-# TLD list is from ICANN
+# TLD list from ICANN
 with open(join(dirname(__file__), 'tld_list.json')) as f:
     tld_list = json.load(f)
 
@@ -15,8 +15,7 @@ with open(join(dirname(__file__), 'tld_list.json')) as f:
 with open(join(dirname(__file__), 'scheme_list.json')) as f:
     schemes = json.load(f)
 
-# with open(join(dirname(__file__), 'subdomain.json')) as f:
-#     schemes = json.load(f)
+### switch to calling ICANN api instead? That way list is up to date
 
 
 class customUrlGenerator(urlGenerator):
@@ -36,9 +35,4 @@ class customUrlGenerator(urlGenerator):
             UnlexerRule(src=name, parent=current)
             return current
 
-    # def subdomain(self, parent=None):
-    #     with RuleContext(self, UnparserRule(name='subdomain', parent=parent)) as current:
-    #         subdomain = random.choice(subdomains)
-    #         UnlexerRule(src=subdomain, parent=current)
-    #         return current
 

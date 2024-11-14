@@ -13,7 +13,7 @@ set +x
 read -p "Generate random API URLs for testing? "
 
 set -x
-grammarinator-generate.exe api_testing.apiUrlGenerator.ApiUrlGenerator \
+grammarinator-generate api_testing.apiUrlGenerator.ApiUrlGenerator \
     --sys-path . \
     -r url \
     -d 10 \
