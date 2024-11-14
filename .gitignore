@@ -188,3 +188,6 @@ replay_pid*
 
 # ANTLR
 .antlr/
+
+# Test files
+test_*.txt

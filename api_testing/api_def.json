@@ -1,0 +1,59 @@
+{
+  "basePath": "http://localhost:4242/api",
+  "version": "v1",
+  "endpoints": [
+    {
+      "path": "/health",
+      "method": "GET",
+      "description": "Check the health of the API",
+      "parameters": [
+        {
+          "name": "verbose",
+          "description": "Whether to return a verbose response"
+        },
+        {
+          "name": "timeout",
+          "description": "The timeout in milliseconds"
+        },
+        {
+          "name": "retries",
+          "description": "The number of retries"
+        }
+      ]
+    },
+    {
+      "path": "/echo",
+      "method": "GET",
+      "description": "Echo back the request parameters",
+      "parameters": [
+        {
+          "name": "message",
+          "description": "The message to echo back"
+        },
+        {
+          "name": "times",
+          "description": "The number of times to echo the message back"
+        },
+        {
+          "name": "delay",
+          "description": "The delay in milliseconds before echoing back the message"
+        }
+      ]
+    },
+    {
+      "path": "/users",
+      "method": "GET",
+      "description": "Get a list of users",
+      "parameters": [
+        {
+          "name": "limit",
+          "description": "The maximum number of users to return"
+        },
+        {
+          "name": "offset",
+          "description": "The offset to start returning users from"
+        }
+      ]
+    }
+  ]
+}
