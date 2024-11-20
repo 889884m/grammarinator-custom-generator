@@ -2,6 +2,7 @@ import random
 
 import json
 import random
+import rstr
 
 from os.path import dirname, join
 
@@ -18,35 +19,51 @@ with open("/Users/brooke_s/grammarinator-custom-generator/tld_list.json") as f:
 
 class myUrl():
     def __init__(self):
-        pass
+        self.chars = 'qwertyuioplkjhgfdsazxcvbnm1234567890-'
 
-    # Customize the function generated from the htmlTagName parser rule to produce valid tag names.
+
     def tld(self, parent=None):
-        with RuleContext(self, UnparserRule(name='tld', parent=parent)) as current:
-            name = random.choice(tld_list)
-            UnlexerRule(src=name, parent=current)
-            return current
+            return random.choice(tld_list)
 
     def scheme(self, parent=None):
-        name = random.choice(schemes)
-        name += "://"
-        return current
+        return random.choice(schemes) + "://"
 
-    def phrase(self, parent=None):
-        return "path"
+    def body_generator(self, depth, parent=None):
+        body_depth  = random.randrange(1, depth)
+        body_text = ''
+        for x in range(body_depth):
+            new_char = random.choice(self.chars)
+            body_text += new_char
+        return body_text + '.'
 
-    def generateURL(self, number, scheme=None, subdomain=None, body=None, tld=None, path=None):
+    def phrase(self, depth, parent=None):
+        path_depth  = random.randrange(1, depth)
+        path_text = ''
+        for x in range(path_depth):
+            new_char = random.choice(self.chars)
+            path_text += new_char
+        return path_text
+
+    def generateURL(self, number=1, depth=10, scheme=None, subdomain=None, body=None, tld=None, path=None):
         lis = []
         for x in range(number):
-            scheme = scheme or self.scheme()
-            subdomain = subdomain or "www."
-            body = body or self.body_generator()
-            tld = tld or self.tld()
-            path = '/' + self.phrase()
-            url = scheme + subdomain + body + tld + path
+            up_scheme = scheme or self.scheme()
+            curr_scheme = up_scheme.lower()
+            curr_subdomain = subdomain or "www."
+            curr_body = body or self.body_generator(depth)
+            if curr_body[-1] != '.':
+                curr_body += '.'
+            up_tld = tld or self.tld()
+            curr_tld = up_tld.lower()
+            curr_path = '/' + self.phrase(depth)
+            curr_url = curr_scheme + curr_subdomain + curr_body + curr_tld + curr_path
+            lis.append(curr_url)
 
         return lis
 
 
 urlGen = myUrl()
-urls = urlGen.generateURL(4)
+timeit.
+urls = urlGen.generateURL(30, 20)
+print(urls)
+
