@@ -45,22 +45,22 @@ full_address: ipv6_group ipv6_group ipv6_group ipv6_group ipv6_group ipv6_group 
 			| ipv6_comp_st                                                                             // 0 groups                                              
 			;
 
-ipv4_linked : ipv6_group ipv6_group ipv6_group ipv6_group ipv6_group ipv4_linked ipv4_address          // 6 groups
-            | ipv6_comp_st ipv6_group ipv6_group ipv6_group ipv6_group ipv4_linked ipv4_address        // 5 groups 
-            | ipv6_comp ipv6_group ipv6_group ipv6_group ipv4_linked ipv4_address                             
-            | ipv6_group ipv6_comp ipv6_group ipv6_group ipv4_linked ipv4_address                              
-            | ipv6_group ipv6_group ipv6_comp ipv6_group ipv4_linked ipv4_address                             
-            | ipv6_group ipv6_group ipv6_group ipv6_comp ipv4_linked ipv4_address                                
-			| ipv6_comp_st ipv6_group ipv6_group ipv6_group ipv4_linked ipv4_address                   // 4 groups               
-			| ipv6_comp ipv6_group ipv6_group ipv4_linked ipv4_address                        
-			| ipv6_group ipv6_comp ipv6_group ipv4_linked ipv4_address                        
-			| ipv6_group ipv6_group ipv6_comp ipv4_linked ipv4_address             
-			| ipv6_comp_st ipv6_group ipv6_group ipv4_linked ipv4_address                              // 3 groups             
-			| ipv6_comp ipv6_group ipv4_linked ipv4_address             
-			| ipv6_group ipv6_comp ipv4_linked ipv4_address         
-			| ipv6_comp_st ipv6_group ipv4_linked ipv4_address                                         // 2 groups       
-			| ipv6_comp ipv4_linked ipv4_address      
-			| ipv6_comp_st ipv4_linked ipv4_address                                                    // 1 group
+ipv4_linked : ipv6_group ipv6_group ipv6_group ipv6_group ipv6_group ipv4_linker ipv4_address          // 6 groups
+            | ipv6_comp_st ipv6_group ipv6_group ipv6_group ipv6_group ipv4_linker ipv4_address        // 5 groups 
+            | ipv6_comp ipv6_group ipv6_group ipv6_group ipv4_linker ipv4_address                             
+            | ipv6_group ipv6_comp ipv6_group ipv6_group ipv4_linker ipv4_address                              
+            | ipv6_group ipv6_group ipv6_comp ipv6_group ipv4_linker ipv4_address                             
+            | ipv6_group ipv6_group ipv6_group ipv6_comp ipv4_linker ipv4_address                                
+			| ipv6_comp_st ipv6_group ipv6_group ipv6_group ipv4_linker ipv4_address                   // 4 groups               
+			| ipv6_comp ipv6_group ipv6_group ipv4_linker ipv4_address                        
+			| ipv6_group ipv6_comp ipv6_group ipv4_linker ipv4_address                        
+			| ipv6_group ipv6_group ipv6_comp ipv4_linker ipv4_address             
+			| ipv6_comp_st ipv6_group ipv6_group ipv4_linker ipv4_address                              // 3 groups             
+			| ipv6_comp ipv6_group ipv4_linker ipv4_address             
+			| ipv6_group ipv6_comp ipv4_linker ipv4_address         
+			| ipv6_comp_st ipv6_group ipv4_linker ipv4_address                                         // 2 groups       
+			| ipv6_comp ipv4_linker ipv4_address      
+			| ipv6_comp_st ipv4_linker ipv4_address                                                    // 1 group
 			;
 
 
@@ -68,7 +68,7 @@ ipv6_group   : fourhex COLON;
 ipv6_comp    : fourhex DOUBLECOLON;
 ipv6_comp_st : DOUBLECOLON;
 ipv6_end     : fourhex;
-ipv4_linked  : IPV4LINK COLON;
+ipv4_linker  : IPV4LINK COLON;
 ipv4_address : threeoct PERIOD threeoct PERIOD threeoct PERIOD threeoct  ;
 
 fourhex  : HEXDIGITNOZERO HEXDIGIT HEXDIGIT HEXDIGIT
@@ -83,11 +83,11 @@ threeoct : DECIMAL DECIMAL DECIMAL
 		 ;
 
 
-HEXDIGIT       : [0-9a-fA-F];
-HEXDIGITNOZERO : [1-9a-fA-F];
+HEXDIGIT       : [0-9a-f];
+HEXDIGITNOZERO : [1-9a-f];
 COLON          : ':';
 DOUBLECOLON    : '::';
 
 DECIMAL        : [0-9];
 PERIOD         : '.';
-IPV4LINK       : 'FFFF';
+IPV4LINK       : 'ffff';
