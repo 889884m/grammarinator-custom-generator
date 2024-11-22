@@ -19,12 +19,13 @@ with open(join(dirname(__file__), 'scheme_list.json')) as f:
 
 
 class customUrlGenerator(urlGenerator):
-    tld_list = tld_list  # Class attribute to hold the TLD list
+    def __init__(self, tld_list):
+        self.tld_list = tld_list  # Class attribute to hold the TLD list
 
     # Customize the function generated from the htmlTagName parser rule to produce valid tag names.
     def tld(self, parent=None):
         with RuleContext(self, UnparserRule(name='tld', parent=parent)) as current:
-            name = random.choice(tld_list)
+            name = random.choice(self.tld_list)
             UnlexerRule(src=name, parent=current)
             return current
 
