@@ -20,6 +20,7 @@ with open(join(dirname(__file__), 'scheme_list.json')) as f:
 
 class customUrlGenerator(urlGenerator):
     tld_list = tld_list  # Class attribute to hold the TLD list
+    schemes = schemes
 
     # Customize the function generated from the htmlTagName parser rule to produce valid tag names.
     def tld(self, parent=None):
