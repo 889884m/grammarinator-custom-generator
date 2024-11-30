@@ -33,7 +33,7 @@ class IPV6_Eval():
                 sleep_time  (float) : sleep time between packets
             Output: None
         """
-        self.debug = debug
+        self.debug       = debug
         self.num_packets = num_packets
 
         self.true_start_time = time.perf_counter()
@@ -41,10 +41,11 @@ class IPV6_Eval():
 
         self.start_time = self.true_start_time
         self.print_time = 0
+        self.generator_time  = 0
 
-        self.packet_id = 0
-        self.address = address
-        self.ipv4_address = None
+        self.packet_id      = 0
+        self.address        = address
+        self.ipv4_address   = None
         self.expand_address = None
 
         self.packet_dest = ''
@@ -91,7 +92,9 @@ class IPV6_Eval():
                 bash_file.write(IPV6_PROCESS_BASH_LINE + self.grammarinator_gen_bash_line)
             os.chmod(IPV6_EXEC_BASH, 0o755)
 
+            gen_start_time = time.perf_counter()
             result = subprocess.run(["bash", IPV6_EXEC_BASH], check=True, text=True, capture_output=True)
+            self.generator_time += time.perf_counter() - gen_start_time
             
             if self.debug: 
                 start = time.perf_counter()
@@ -178,7 +181,7 @@ class IPV6_Eval():
             Output: None
         """
         print(f"Time elapsed: {(time.perf_counter()-self.start_time-self.print_time):.6f} seconds" if not final else\
-              f"Total time  : {(time.perf_counter()-self.true_start_time-self.true_print_time):.6f} seconds \nAverage time: {(time.perf_counter()-self.true_start_time-self.true_print_time)/(self.num_packets):.6f} seconds\n") 
+              f"Total time  : {(time.perf_counter()-self.true_start_time-self.true_print_time):.6f} seconds \nAverage time: {(time.perf_counter()-self.true_start_time-self.true_print_time)/(self.num_packets):.6f} seconds\nGenerator time: {self.generator_time:.6f} seconds\n") 
 
     def reset(self):
         """
