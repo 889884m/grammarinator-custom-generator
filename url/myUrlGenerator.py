@@ -1,7 +1,6 @@
 import random
 import timeit
 import json
-import random
 import rstr
 import os
 
@@ -59,41 +58,62 @@ class myUrl():
             curr_path = '/' + self.phrase(depth)
             curr_url = curr_scheme + curr_subdomain + curr_body + curr_tld + curr_path
             lis.append(curr_url)
+        
+        if not os.path.exists('tests'):
+            os.makedirs('tests')
+
+        existing_files = os.listdir('tests')
+        existing_indexes = []
+        for filename in existing_files:
+            index = int(filename.split('_')[1].split('.')[0])
+            existing_indexes.append(index)
+        next_index = max(existing_indexes, default=-1) + 1
+
+        for element in lis:
+            filename = f"tests/test_{next_index}.txt"
+            with open(filename, "w") as file:
+                file.write(element)
+            next_index += 1
+        
 
         return lis
 
 
-#print(urls)
+URL = myUrl()
+
+URL.generateURL()
 
 import time
 import matplotlib.pyplot as plt
 
 
-# Function to measure runtime for different input sizes
-def time_function(input_sizes, num_trials=1):
-    urlGen = myUrl()
-    times = []  # Store times for each input size
-    for n in input_sizes:
-        trial_times = []  # Store times for multiple trials for the same input size
-        for _ in range(num_trials):
-            start_time = time.time()  # Record start time
-            urlGen.generateURL(n, 10)  # Run the function
-            end_time = time.time()  # Record end time
-            trial_times.append(end_time - start_time)  # Append time taken for this trial
-        avg_time = sum(trial_times) / len(trial_times)  # Average time for the given input size
-        times.append(avg_time)  # Append average time to the list
-    return times
 
-# Define a range of input sizes to test
-input_sizes = list(range(0, 5000, 100))
 
-# Get the times for the function
-execution_times = time_function(input_sizes)
+# # Function to measure runtime for different input sizes
+# def time_function(input_sizes, num_trials=1):
+#     urlGen = myUrl()
+#     times = []  # Store times for each input size
+#     for n in input_sizes:
+#         trial_times = []  # Store times for multiple trials for the same input size
+#         for _ in range(num_trials):
+#             start_time = time.time()  # Record start time
+#             urlGen.generateURL(n, 10)  # Run the function
+#             end_time = time.time()  # Record end time
+#             trial_times.append(end_time - start_time)  # Append time taken for this trial
+#         avg_time = sum(trial_times) / len(trial_times)  # Average time for the given input size
+#         times.append(avg_time)  # Append average time to the list
+#     return times
 
-# Plot the times
-plt.plot(input_sizes, execution_times, marker='o', linestyle='-', color='b')
-plt.title('Execution Time vs URL Depth')
-plt.xlabel('URL Depth (n)')
-plt.ylabel('Time (seconds)')
-plt.grid(True)
-plt.show()
+# # Define a range of input sizes to test
+# input_sizes = list(range(0, 5000, 100))
+
+# # Get the times for the function
+# execution_times = time_function(input_sizes)
+
+# # Plot the times
+# plt.plot(input_sizes, execution_times, marker='o', linestyle='-', color='b')
+# plt.title('Execution Time vs URL Depth')
+# plt.xlabel('URL Depth (n)')
+# plt.ylabel('Time (seconds)')
+# plt.grid(True)
+# plt.show()
