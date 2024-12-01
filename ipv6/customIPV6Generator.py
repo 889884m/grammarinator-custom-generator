@@ -60,35 +60,47 @@ class myIPV6():
         return ls
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "-n", "--num",
-        type=int,
-        default=1,
-        help="number of IP addresses to generate (default: 1)",
-    )
-    suggested_output_directory = Path.cwd() / "tests" / "ipv6"
-    parser.add_argument(
-        "-o", "--output",
-        type=Path,
-        nargs="?",
-        const=suggested_output_directory,
-        help="output directory for generated IP addresses. If flag is not "
-             "present, no files are written. If flag is present without an "
-             "argument, a default output directory is used: "
-             f"{suggested_output_directory}. Else, the argument is used as "
-             "the output directory.",
-    )
+parser = argparse.ArgumentParser(description=__doc__)
 
+parser.add_argument(
+    "-n", "--num",
+    type=int,
+    default=1,
+    help="number of IP addresses to generate (default: 1)",
+)
+
+_suggested_output_directory = Path.cwd() / "tests" / "ipv6"
+parser.add_argument(
+    "-o", "--output",
+    type=Path,
+    nargs="?",
+    const=_suggested_output_directory,
+    help="output directory for generated IP addresses. If flag is not "
+         "present, no files are written. If flag is present without an "
+         "argument, a default output directory is used: "
+         f"{_suggested_output_directory}. Else, the argument is used as "
+         "the output directory.",
+)
+
+parser.add_argument(
+    "-g", "--groups",
+    type=str,
+    nargs="*",
+    default=[],
+    help="groups to include in the generated IP addresses. Each group "
+         "should be a 4-character hexadecimal string. If not provided, "
+         "random groups are generated. Invalid groups are ignored.",
+)
+
+
+def main() -> None:
     args = parser.parse_args()
     num_tests: int = args.num
     output_directory: Path | None = args.output
+    digit_groups: list[str] = args.groups
 
     ip = myIPV6()
-    # TODO: Not sure what the `groups` argument is for, so I left them
-    # as the hard-coded values they were before the update.
-    addresses = ip.generateAddress(num_tests, "1234", "12345", "03", "0000")
+    addresses = ip.generateAddress(num_tests, *digit_groups)
 
     if output_directory is None:
         for address in addresses:
