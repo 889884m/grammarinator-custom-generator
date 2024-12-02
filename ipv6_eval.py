@@ -53,7 +53,7 @@ class IPV6_Eval():
         self.num_groups = 8
         self.sleep_time = sleep_time
 
-        self.grammarinator_gen_bash_line = f'grammarinator-generate ipv6Generator.ipv6Generator  -r start -o {IPV6_TEST_DIR}/test_{self.packet_id}.txt -n 1 --sys-path $main_dir/ipv6'
+        self.grammarinator_gen_bash_line = f'grammarinator-generate ipv6Generator.ipv6Generator  -r start -o "{IPV6_TEST_DIR}/test_{self.packet_id}.txt" -n 1 --sys-path "$main_dir/ipv6"'
 
     def execute(self):
         """
@@ -202,8 +202,7 @@ class IPV6_Eval():
 
         self.packet_dest = ''
 
-        self.grammarinator_gen_bash_line = f'grammarinator-generate ipv6Generator.ipv6Generator  -r start -o {IPV6_TEST_DIR}/test_{self.packet_id}.txt -n 1 --sys-path $main_dir/ipv6'
-
+        self.grammarinator_gen_bash_line = f'grammarinator-generate ipv6Generator.ipv6Generator  -r start -o "{IPV6_TEST_DIR}/test_{self.packet_id}.txt" -n 1 --sys-path "$main_dir/ipv6"'
 
     def cleanup(self):
         """
