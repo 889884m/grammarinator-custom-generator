@@ -5,20 +5,26 @@ import shutil
 import json
 import random
 import argparse
+from pathlib import Path
+
+import customIPV6Generator
+
 
 IPV6_EXEC_BASH       = './ipv6_gram_gen_script_auto.sh'
-IPV6_TEST_DIR        = 'tests/ipv6'
-IPV6_TEST_PACKET_DIR = 'tests/ipv6/packets'
+IPV6_GRAM_TEST_DIR   = 'tests/grammarinator_output'
+IPV6_CUST_TEST_DIR   = 'tests/customgen_output'
+IPV6_TEST_PACKET_DIR = 'tests/packets'
 
 IPV6_PROCESS_BASH_LINE = \
 f"""
 main_dir=$(dirname "$(realpath "$0")")  
-grammarinator-process ipv6/ipv6.g4 -o ipv6/
+grammarinator-process ipv6.g4 -o ipv6/
 """
 
 
 class IPV6_Eval():
     def __init__(self, 
+                 gen_choice: bool,
                  debug: bool         = False, 
                  num_packets: int    = 1, 
                  address: str | None = None,
@@ -27,12 +33,15 @@ class IPV6_Eval():
         """
             Init function for IPV6_Eval.
             Parameters:
-                debug       (bool)  : debug flag
-                num_packets (int)   : number of packets for testing
-                address     (str)   : hardcoded address for debugging
-                sleep_time  (float) : sleep time between packets
+                gen_choice  (bool)  : generator choice. 
+                debug       (bool)  : debug flag.                      Default is False.
+                num_packets (int)   : number of packets for testing.   Default is 1.
+                address     (str)   : hardcoded address for debugging. Default is None.
+                sleep_time  (float) : sleep time between packets.      Default is 0.1.
             Output: None
         """
+        self.gen_choice = gen_choice
+
         self.debug       = debug
         self.num_packets = num_packets
 
@@ -53,7 +62,7 @@ class IPV6_Eval():
         self.num_groups = 8
         self.sleep_time = sleep_time
 
-        self.grammarinator_gen_bash_line = f'grammarinator-generate ipv6Generator.ipv6Generator  -r start -o "{IPV6_TEST_DIR}/test_{self.packet_id}.txt" -n 1 --sys-path "$main_dir/ipv6"'
+        self.grammarinator_gen_bash_line = f'grammarinator-generate ipv6Generator.ipv6Generator -r start -o "{IPV6_GRAM_TEST_DIR}/test_{self.packet_id}.txt" -n 1 --sys-path "$main_dir"'
 
     def execute(self):
         """
@@ -67,8 +76,8 @@ class IPV6_Eval():
             if self.debug: print()
             if self.debug: print(f"========= Packet {self.packet_id} =========")
 
-            if not self.address: self.grammarinator()
-            if not self.address: self.read_grammarinator_txt()
+            self.grammarinator() if self.gen_choice == 0 else self.custom_generator()
+            self.read_grammarinator_txt()
             self.decode_ipv6()
             self.send_packet()
             
@@ -105,6 +114,17 @@ class IPV6_Eval():
             print(f"Script failed with error: {e.stderr}")
             exit()
 
+    def custom_generator(self):
+        """
+            Call CustomGenerator.
+            Parameters: None
+            Output: None
+        """
+        arguments = {'num': self.num_packets,
+                     'output': Path(IPV6_CUST_TEST_DIR),
+                     'groups': []}
+        customIPV6Generator.main(arguments)
+
     def read_grammarinator_txt(self):
         """
             Read grammarinator output file and save content.
@@ -113,7 +133,7 @@ class IPV6_Eval():
         """
         try:
             # Open the file and read all its content
-            with open(F'{IPV6_TEST_DIR}/test_{self.packet_id}.txt', "r") as file:
+            with open(F'{IPV6_GRAM_TEST_DIR if self.gen_choice == 0 else IPV6_CUST_TEST_DIR}/test_{self.packet_id}.txt', "r") as file:
                 self.address = file.read()
 
             if self.debug: 
@@ -131,12 +151,14 @@ class IPV6_Eval():
             Parameters: None
             Output: None
         """
-        if len([group for group in self.address.split(':') if len(group) > 0]) == 8       or\
-           ('.' in self.address                                                           and\
-            len([group for group in self.address.split(':')[:-1] if len(group) > 0]) == 6 and\
-            len(self.address.split(':')[-1].split('.')) == 4): return 
+        # return if uncompressed already
+        self.expand_address = self.address.split(":")
+        if len([group for group in self.address.split(':') if len(group) > 0]) == 8:            return
+        if '.' in self.address                                                           and\
+           len([group for group in self.address.split(':')[:-1] if len(group) > 0]) == 6 and\
+           len(self.address.split(':')[-1].split('.')) == 4:                                    return 
         
-        if '.' in self.address:
+        if '.' in self.address:  # if ipv4-mapped
             self.address, self.ipv4_address = ''.join([group + ':' for group in self.address.split(':')[:-1]]).rstrip(':'), self.address.split(':')[-1]
             self.num_groups = 6
 
@@ -202,7 +224,7 @@ class IPV6_Eval():
 
         self.packet_dest = ''
 
-        self.grammarinator_gen_bash_line = f'grammarinator-generate ipv6Generator.ipv6Generator  -r start -o "{IPV6_TEST_DIR}/test_{self.packet_id}.txt" -n 1 --sys-path "$main_dir/ipv6"'
+        self.grammarinator_gen_bash_line = f'grammarinator-generate ipv6Generator.ipv6Generator  -r start -o "{IPV6_GRAM_TEST_DIR}/test_{self.packet_id}.txt" -n 1 --sys-path "$main_dir/ipv6"'
 
     def cleanup(self):
         """
@@ -210,30 +232,54 @@ class IPV6_Eval():
             Parameters: None
             Output: None
         """
-        if os.path.exists(IPV6_TEST_DIR) and os.path.isdir(IPV6_TEST_DIR):
-            shutil.rmtree(IPV6_TEST_DIR)
-            if self.debug: print(f"All files removed from {IPV6_TEST_DIR}")
+        if os.path.exists(IPV6_GRAM_TEST_DIR) and os.path.isdir(IPV6_GRAM_TEST_DIR):
+            shutil.rmtree(IPV6_GRAM_TEST_DIR)
+            if self.debug: print(f"All files removed from {IPV6_GRAM_TEST_DIR}")
+
+        if os.path.exists(IPV6_CUST_TEST_DIR) and os.path.isdir(IPV6_CUST_TEST_DIR):
+            shutil.rmtree(IPV6_CUST_TEST_DIR)
+            if self.debug: print(f"All files removed from {IPV6_CUST_TEST_DIR}")
 
         if os.path.exists(IPV6_TEST_PACKET_DIR) and os.path.isdir(IPV6_TEST_PACKET_DIR): 
             shutil.rmtree(IPV6_TEST_PACKET_DIR)
-            if self.debug: print(f"All files removed from {IPV6_TEST_DIR}")
+            if self.debug: print(f"All files removed from {IPV6_TEST_PACKET_DIR}")
 
-        os.makedirs(IPV6_TEST_DIR)
-        if self.debug: print(f"Directory created: {IPV6_TEST_DIR}")
+        os.makedirs(IPV6_GRAM_TEST_DIR)
+        if self.debug: print(f"Directory created: {IPV6_GRAM_TEST_DIR}")
+
+        os.makedirs(IPV6_CUST_TEST_DIR)
+        if self.debug: print(f"Directory created: {IPV6_CUST_TEST_DIR}")
 
         os.makedirs(IPV6_TEST_PACKET_DIR)
         if self.debug: print(f"Directory created: {IPV6_TEST_PACKET_DIR}")
 
 
 def main(args):
-    ipv6_eval = IPV6_Eval(debug = True if args.debug else False,
-                          num_packets = args.packets if args.packets else 1)
+    ipv6_eval = IPV6_Eval(gen_choice  = args.generator,
+                          debug       = args.debug,    
+                          num_packets = args.packets)
     ipv6_eval.execute()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--debug', type=int, help='Specify debug flag: 0-False, 1-True')
-    parser.add_argument('-p', '--packets', type=int, help='Specify number of packets.')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        '-g', '--generator',   
+        type=int, 
+        default=0, 
+        help='Specify generator: 0-Grammarinator, 1-CustomGenerator. Default is 0')
+    
+    parser.add_argument(
+        '-d', '--debug',      
+        type=int, 
+        default=0, 
+        help='Specify debug flag: 0-False, 1-True. Default is 0')
+    
+    parser.add_argument(
+        '-p', '--packets',     
+        type=int, 
+        default=1, 
+        help='Specify number of packets. Default is 1')
+    
     args = parser.parse_args()
     main(args)
