@@ -60,44 +60,45 @@ class myIPV6():
         return ls
 
 
-parser = argparse.ArgumentParser(description=__doc__)
+# parser = argparse.ArgumentParser(description=__doc__)
 
-parser.add_argument(
-    "-n", "--num",
-    type=int,
-    default=1,
-    help="number of IP addresses to generate (default: 1)",
-)
+# parser.add_argument(
+#     "-n", "--num",
+#     type=int,
+#     default=1,
+#     help="number of IP addresses to generate (default: 1)",
+# )
 
-_suggested_output_directory = Path.cwd() / "tests" / "ipv6"
-parser.add_argument(
-    "-o", "--output",
-    type=Path,
-    nargs="?",
-    const=_suggested_output_directory,
-    help="output directory for generated IP addresses. If flag is not "
-         "present, no files are written. If flag is present without an "
-         "argument, a default output directory is used: "
-         f"{_suggested_output_directory}. Else, the argument is used as "
-         "the output directory.",
-)
+# _suggested_output_directory = Path.cwd() / "tests" / "ipv6"
+# parser.add_argument(
+#     "-o", "--output",
+#     type=Path,
+#     nargs="?",
+#     const=_suggested_output_directory,
+#     help="output directory for generated IP addresses. If flag is not "
+#          "present, no files are written. If flag is present without an "
+#          "argument, a default output directory is used: "
+#          f"{_suggested_output_directory}. Else, the argument is used as "
+#          "the output directory.",
+# )
 
-parser.add_argument(
-    "-g", "--groups",
-    type=str,
-    nargs="*",
-    default=[],
-    help="groups to include in the generated IP addresses. Each group "
-         "should be a 4-character hexadecimal string. If not provided, "
-         "random groups are generated. Invalid groups are ignored.",
-)
+# parser.add_argument(
+#     "-g", "--groups",
+#     type=str,
+#     nargs="*",
+#     default=[],
+#     help="groups to include in the generated IP addresses. Each group "
+#          "should be a 4-character hexadecimal string. If not provided, "
+#          "random groups are generated. Invalid groups are ignored.",
+# )
 
 
-def main() -> None:
-    args = parser.parse_args()
-    num_tests: int = args.num
-    output_directory: Path | None = args.output
-    digit_groups: list[str] = args.groups
+def main(args) -> None:
+    # args = parser.parse_args()
+    # print(args)
+    num_tests: int = args['num']
+    output_directory: Path | None = args['output']
+    digit_groups: list[str] = args['groups']
 
     ip = myIPV6()
     addresses = ip.generateAddress(num_tests, *digit_groups)
@@ -109,10 +110,10 @@ def main() -> None:
 
     output_directory.mkdir(parents=True, exist_ok=True)
     for test_index, address in enumerate(addresses):
-        test_num = test_index + 1
+        test_num = test_index
         output_path = output_directory / f"test_{test_num}.txt"
         output_path.write_text(address)
-        print(address, output_path, sep="\t")
+        # print(address, output_path, sep="\t")
 
 
 if __name__ == "__main__":
