@@ -12,11 +12,12 @@ region          : 'us-east-1' | 'us-east-2' | 'us-west-1' | 'us-west-2' |
                   'ap-southeast-2' | 'ap-southeast-3' | 'ca-central-1' |
                   'eu-central-1' | 'eu-west-1' | 'eu-west-2' | 'eu-west-3' |
                   'eu-north-1' | 'eu-south-1' | 'me-south-1' | 'sa-east-1';// [a-z]{2}-[a-z]+-[0-9]{1}; // Region format e.g. us-west-2, etc.
-accountId       : [0-9] [0-9] [0-9] [0-9] [0-9] [0-9] [0-9] [0-9] [0-9] [0-9] [0-9] [0-9]; // 12 digit AWS account number
+accountId       : NUM NUM NUM NUM NUM NUM NUM NUM NUM NUM NUM NUM; // 12 digit AWS account number
 resourceType    : TEXT; // Alphanumeric resource type
 resourceId      : ( TEXT | '/' TEXT )+; // Resource ID can include slashes for nested resources
 
 TEXT            : [a-zA-Z0-9-]+
+NUM             : [0-9]
 
 // WS              : [ \t\r\n]+ -> skip; // Skip whitespace
 
