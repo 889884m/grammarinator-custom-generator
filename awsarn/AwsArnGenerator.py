@@ -17,7 +17,7 @@ class AwsArnGenerator(Generator):
             self.awsArn(parent=current)
             self.EOF(parent=current)
             return current
-    start.min_depth = 2
+    start.min_depth = 3
 
     def awsArn(self, parent=None):
         with RuleContext(self, UnparserRule(name='awsArn', parent=parent)) as current:
@@ -34,7 +34,7 @@ class AwsArnGenerator(Generator):
             self.resourceType(parent=current)
             self.resourceId(parent=current)
             return current
-    awsArn.min_depth = 1
+    awsArn.min_depth = 2
 
     def partition(self, parent=None):
         with RuleContext(self, UnparserRule(name='partition', parent=parent)) as current:
@@ -46,13 +46,15 @@ class AwsArnGenerator(Generator):
 
     def service(self, parent=None):
         with RuleContext(self, UnparserRule(name='service', parent=parent)) as current:
-            pass
+            self.TEXT(parent=current)
             return current
-    service.min_depth = 0
+    service.min_depth = 1
 
     def region(self, parent=None):
         with RuleContext(self, UnparserRule(name='region', parent=parent)) as current:
-            pass
+            with AlternationContext(self, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) as weights0:
+                choice0 = self._model.choice(current, 0, weights0)
+                UnlexerRule(src=['us-east-1', 'us-east-2', 'us-west-1', 'us-west-2', 'af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-northeast-3', 'ap-southeast-1', 'ap-southeast-2', 'ap-southeast-3', 'ca-central-1', 'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'eu-south-1', 'me-south-1', 'sa-east-1'][choice0], parent=current)
             return current
     region.min_depth = 0
 
@@ -64,24 +66,35 @@ class AwsArnGenerator(Generator):
 
     def resourceType(self, parent=None):
         with RuleContext(self, UnparserRule(name='resourceType', parent=parent)) as current:
-            pass
+            self.TEXT(parent=current)
             return current
-    resourceType.min_depth = 0
+    resourceType.min_depth = 1
 
     def resourceId(self, parent=None):
         with RuleContext(self, UnparserRule(name='resourceId', parent=parent)) as current:
-            with AlternationContext(self, [0, 0], [1, 1]) as weights0:
-                choice0 = self._model.choice(current, 0, weights0)
-                if choice0 == 0:
-                    if self._max_depth >= 0:
-                        for _ in self._model.quantify(current, 0, min=1, max=inf):
-                elif choice0 == 1:
-                    UnlexerRule(src='/', parent=current)
+            if self._max_depth >= 0:
+                for _ in self._model.quantify(current, 0, min=1, max=inf):
+                    with AlternationContext(self, [1, 1], [1, 1]) as weights0:
+                        choice0 = self._model.choice(current, 0, weights0)
+                        if choice0 == 0:
+                            self.TEXT(parent=current)
+                        elif choice0 == 1:
+                            UnlexerRule(src='/', parent=current)
+                            self.TEXT(parent=current)
             return current
-    resourceId.min_depth = 0
+    resourceId.min_depth = 1
+
+    def TEXT(self, parent=None):
+        with RuleContext(self, UnlexerRule(name='TEXT', parent=parent)) as current:
+            if self._max_depth >= 0:
+                for _ in self._model.quantify(current, 0, min=1, max=inf):
+                    UnlexerRule(src=self._model.charset(current, 0, self._charsets[1]), parent=current)
+            return current
+    TEXT.min_depth = 0
 
     _default_rule = start
 
     _charsets = {
         0: list(itertools.chain.from_iterable([range(32, 127)])),
+        1: list(itertools.chain.from_iterable([range(45, 46), range(48, 58), range(65, 91), range(97, 123)])),
     }
