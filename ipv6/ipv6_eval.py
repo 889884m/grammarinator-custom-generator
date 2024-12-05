@@ -417,8 +417,8 @@ class IPV6_Eval():
 
 def main(args):
     if args.evaluation == 0:
-        number_of_packets = [1,10,100,1000,5000,10000,50000,100000,200000,300000,400000,500000]
-        # number_of_packets = [1,10,100,1000,10000, 50000, 100000]  
+        # number_of_packets = [1,10,100,1000,5000,10000,50000,100000,200000,300000,400000,500000]
+        number_of_packets = [1,10,100,1000]  
         total_execution_time = []
         generator_execution_time = []
         generator_percentage = []
