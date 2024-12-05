@@ -30,6 +30,7 @@ class IPV6_Eval():
                  eval_choice: bool,
                  debug: bool         = False, 
                  num_packets: int    = 1, 
+                 bits_count: int     = 1,
                  address: str | None = None,
                  sleep_time: float   = 0.1
                 ) -> None:
@@ -48,6 +49,7 @@ class IPV6_Eval():
 
         self.debug       = debug
         self.num_packets = num_packets
+        self.bits_count  = bits_count
 
         # self.true_start_time = time.perf_counter()
         self.true_start_time = 0
@@ -96,7 +98,7 @@ class IPV6_Eval():
             if self.debug: print(f"========= Packet {self.packet_id} =========")
 
             self.decode_ipv6()
-            self.send_packet() if self.eval_choice == 0 else self.send_packet_via_astar()
+            self.send_packet() if self.eval_choice == 0 else self.send_packet_via_astar(self.bits_count)
             
             # time.sleep(self.sleep_time)
             if self.debug: self.report_time()
@@ -414,88 +416,170 @@ class IPV6_Eval():
 
 
 def main(args):
-    number_of_packets = [1,10,100,1000,5000,10000,50000,100000,200000,300000,400000,500000]
-    # number_of_packets = [1,10,100,1000,10000]  
-    total_execution_time = []
-    generator_execution_time = []
-    generator_percentage = []
-    for n in number_of_packets:
-        print(f"--------------------- {n} Packets ---------------------")
-        ipv6_eval = IPV6_Eval(gen_choice  = args.generator,
-                              eval_choice = args.evaluation,
-                              debug       = args.debug,    
-                              num_packets = n)
-        total, generator = ipv6_eval.execute()
-        total_execution_time.append(float(total))
-        generator_execution_time.append(float(generator))
-        generator_percentage.append(round(float(generator)/float(total) if float(total) > 0.0 else 1.0, 4) * 100.0)
+    if args.evaluation == 0:
+        number_of_packets = [1,10,100,1000,5000,10000,50000,100000,200000,300000,400000,500000]
+        # number_of_packets = [1,10,100,1000,10000, 50000, 100000]  
+        total_execution_time = []
+        generator_execution_time = []
+        generator_percentage = []
+        for n in number_of_packets:
+            print(f"--------------------- {n} Packets ---------------------")
+            ipv6_eval = IPV6_Eval(gen_choice  = args.generator,
+                                eval_choice = args.evaluation,
+                                debug       = args.debug,    
+                                num_packets = n)
+            total, generator = ipv6_eval.execute()
+            total_execution_time.append(float(total))
+            generator_execution_time.append(float(generator))
+            generator_percentage.append(round(float(generator)/float(total) if float(total) > 0.0 else 1.0, 4) * 100.0)
 
-        ipv6_eval.cleanup()
+            ipv6_eval.cleanup()
 
-    print(total_execution_time)
-    print(generator_execution_time)
-    # print(generator_execution_time)
-    # plt.figure(figsize=(8, 5))
-    # plt.plot(number_of_packets, total_execution_time, marker='o', linestyle='-', color='blue', label='Execution Time')
-    # # plt.plot(number_of_packets, generator_execution_time, marker='o', linestyle='-', color='blue', label='Generation Time')
+        print(total_execution_time)
+        print(generator_execution_time)
+        print(generator_percentage)
+        # print(generator_execution_time)
+        # plt.figure(figsize=(8, 5))
+        # plt.plot(number_of_packets, total_execution_time, marker='o', linestyle='-', color='blue', label='Execution Time')
+        # # plt.plot(number_of_packets, generator_execution_time, marker='o', linestyle='-', color='blue', label='Generation Time')
 
-    # # Add labels and title
-    # plt.xlabel('Number of Packets')
-    # plt.ylabel('Execution Time (s)')
-    # plt.title('Execution Time vs. Number of Packets')
-    # # plt.ylabel('Generation Time (s)')
-    # # plt.title('Generation Time vs. Number of Packets')
-    # plt.legend()
+        # # Add labels and title
+        # plt.xlabel('Number of Packets')
+        # plt.ylabel('Execution Time (s)')
+        # plt.title('Execution Time vs. Number of Packets')
+        # # plt.ylabel('Generation Time (s)')
+        # # plt.title('Generation Time vs. Number of Packets')
+        # plt.legend()
 
-    # # Display grid and show the plot
-    # plt.grid(True)
-    # plt.show()
+        # # Display grid and show the plot
+        # plt.grid(True)
+        # plt.show()
 
-    # Create the first graph
-    y1_range, y2_range, y3_range = max(total_execution_time) - min(total_execution_time),max(generator_execution_time)- min(generator_execution_time), max(generator_percentage)- min(generator_percentage)
-    dy1, dy2, dy3 = 0.15 * y1_range, 0.15 * y2_range, 0.15 * y3_range
-    y1_min, y1_max = min(total_execution_time) - dy1, max(total_execution_time) + dy1
-    y2_min, y2_max = min(generator_execution_time) - dy2, max(generator_execution_time) + dy2
-    y3_min, y3_max = min(generator_percentage) -dy3, max(generator_percentage) + dy3
+        # Create the first graph
+        y1_range, y2_range, y3_range = max(total_execution_time) - min(total_execution_time),max(generator_execution_time)- min(generator_execution_time), max(generator_percentage)- min(generator_percentage)
+        dy1, dy2, dy3 = 0.15 * y1_range, 0.15 * y2_range, 0.15 * y3_range
+        y1_min, y1_max = min(total_execution_time) - dy1, max(total_execution_time) + dy1
+        y2_min, y2_max = min(generator_execution_time) - dy2, max(generator_execution_time) + dy2
+        y3_min, y3_max = min(generator_percentage) -dy3, max(generator_percentage) + dy3
 
-    # print(y3_min,y3_max)
-    plt.figure(figsize=(15, 5))  # Set the figure size
+        # print(y3_min,y3_max)
+        plt.figure(figsize=(15, 5))  # Set the figure size
 
-    plt.subplot(1, 3, 1)  # 1 row, 2 columns, 1st graph
-    # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
-    plt.plot(number_of_packets, total_execution_time, marker='o', label='Execution Time', color='blue')
-    plt.ylim(y1_min, y1_max)  # Set consistent y-axis limits
-    plt.title("Execution Time vs. Number of Packets")
-    plt.xlabel('Number of Packets')
-    plt.ylabel('Execution Time (s)')
-    plt.legend()
-    plt.grid(True)
+        plt.subplot(1, 3, 1)  # 1 row, 2 columns, 1st graph
+        # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
+        plt.plot(number_of_packets, total_execution_time, marker='o', label='Execution Time', color='blue')
+        plt.ylim(y1_min, y1_max)  # Set consistent y-axis limits
+        plt.title("Execution Time vs. Number of Packets")
+        plt.xlabel('Number of Packets')
+        plt.ylabel('Execution Time (s)')
+        plt.legend()
+        plt.grid(True)
 
-    # Create the second graph
-    plt.subplot(1, 3, 2)  # 1 row, 2 columns, 2nd graph
-    # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
-    plt.plot(number_of_packets, generator_execution_time, marker='o', label='Generation Time', color='green')
-    plt.ylim(y2_min, y2_max)  # Set consistent y-axis limits
-    plt.title("Generation Time vs. Number of Packets")
-    plt.xlabel('Number of Packets')
-    plt.ylabel('Generation Time (s)')
-    plt.legend()
-    plt.grid(True)
+        # Create the second graph
+        plt.subplot(1, 3, 2)  # 1 row, 2 columns, 2nd graph
+        # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
+        plt.plot(number_of_packets, generator_execution_time, marker='o', label='Generation Time', color='green')
+        plt.ylim(y2_min, y2_max)  # Set consistent y-axis limits
+        plt.title("Generation Time vs. Number of Packets")
+        plt.xlabel('Number of Packets')
+        plt.ylabel('Generation Time (s)')
+        plt.legend()
+        plt.grid(True)
 
-    # Create the third  graph
-    plt.subplot(1, 3, 3)  # 1 row, 2 columns, 2nd graph
-    # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
-    plt.plot(number_of_packets, generator_percentage, marker='o', label='Generation Time / Total Time', color='green')
-    plt.ylim(y3_min, y3_max)  # Set consistent y-axis limits
-    plt.title("Generation Time / Total Time vs. Number of Packets")
-    plt.xlabel('Number of Packets')
-    plt.ylabel('Generation Time / Total Time')
-    plt.legend()
-    plt.grid(True)
+        # Create the third  graph
+        plt.subplot(1, 3, 3)  # 1 row, 2 columns, 2nd graph
+        # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
+        plt.plot(number_of_packets, generator_percentage, marker='o', label='Generation Time / Total Time', color='green')
+        plt.ylim(y3_min, y3_max)  # Set consistent y-axis limits
+        plt.title("Generation Time / Total Time vs. Number of Packets")
+        plt.xlabel('Number of Packets')
+        plt.ylabel('Generation Time / Total Time')
+        plt.legend()
+        plt.grid(True)
 
-    # Show both graphs
-    plt.tight_layout()  # Adjust layout to prevent overlap
-    plt.show()
+        # Show both graphs
+        plt.tight_layout()  # Adjust layout to prevent overlap
+        plt.show()
+    
+    else:
+        run_times = 10
+        bits = [1,2,3,4]
+        avg_total = []
+        avg_gen_exec = []
+        avg_gen_perc = []
+        for b in bits:
+            print(f"======= Bits {b} =======")
+            total_execution_time = []
+            generator_execution_time = []
+            generator_percentage = []
+            for _ in range(run_times):
+                print(f"------- Run {_} -------")
+                ipv6_eval = IPV6_Eval(gen_choice  = args.generator,
+                                      eval_choice = args.evaluation,
+                                      debug       = args.debug,    
+                                      num_packets = 1,
+                                      bits_count  = b)
+                total, generator = ipv6_eval.execute()
+                total_execution_time.append(float(total))
+                generator_execution_time.append(float(generator))
+                generator_percentage.append(round(float(generator)/float(total) if float(total) > 0.0 else 1.0, 4) * 100.0)
+
+                ipv6_eval.cleanup()
+
+            print(total_execution_time)
+            print(generator_execution_time)
+            print(generator_percentage)
+
+            avg_total.append(sum(total_execution_time)/len(total_execution_time))
+            avg_gen_exec.append(sum(generator_execution_time)/len(generator_execution_time))
+            avg_gen_perc.append(sum(generator_percentage)/len(generator_percentage))
+
+            
+        y1_range, y2_range, y3_range = max(avg_total) - min(avg_total),max(avg_gen_exec)- min(avg_gen_exec), max(avg_gen_perc)- min(avg_gen_perc)
+        dy1, dy2, dy3 = 0.15 * y1_range, 0.15 * y2_range, 0.15 * y3_range
+        y1_min, y1_max = min(avg_total) - dy1, max(avg_total) + dy1
+        y2_min, y2_max = min(avg_gen_exec) - dy2, max(avg_gen_exec) + dy2
+        y3_min, y3_max = min(avg_gen_perc) -dy3, max(avg_gen_perc) + dy3
+
+        # print(y3_min,y3_max)
+        plt.figure(figsize=(15, 5))  # Set the figure size
+
+        plt.subplot(1, 3, 1)  # 1 row, 2 columns, 1st graph
+        # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
+        plt.plot(number_of_packets, total_execution_time, marker='o', label='Execution Time', color='blue')
+        plt.ylim(y1_min, y1_max)  # Set consistent y-axis limits
+        plt.title("Execution Time vs. Number of Packets")
+        plt.xlabel('Number of Packets')
+        plt.ylabel('Execution Time (s)')
+        plt.legend()
+        plt.grid(True)
+
+        # Create the second graph
+        plt.subplot(1, 3, 2)  # 1 row, 2 columns, 2nd graph
+        # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
+        plt.plot(number_of_packets, generator_execution_time, marker='o', label='Generation Time', color='green')
+        plt.ylim(y2_min, y2_max)  # Set consistent y-axis limits
+        plt.title("Generation Time vs. Number of Packets")
+        plt.xlabel('Number of Packets')
+        plt.ylabel('Generation Time (s)')
+        plt.legend()
+        plt.grid(True)
+
+        # Create the third  graph
+        plt.subplot(1, 3, 3)  # 1 row, 2 columns, 2nd graph
+        # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
+        plt.plot(number_of_packets, generator_percentage, marker='o', label='Generation Time / Total Time', color='green')
+        plt.ylim(y3_min, y3_max)  # Set consistent y-axis limits
+        plt.title("Generation Time / Total Time vs. Number of Packets")
+        plt.xlabel('Number of Packets')
+        plt.ylabel('Generation Time / Total Time')
+        plt.legend()
+        plt.grid(True)
+
+        # Show both graphs
+        plt.tight_layout()  # Adjust layout to prevent overlap
+        plt.show()
+
 
 
 if __name__ == '__main__':
