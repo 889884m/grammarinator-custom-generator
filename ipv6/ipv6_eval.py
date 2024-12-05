@@ -27,6 +27,7 @@ grammarinator-process ipv6.g4 -o "$main_dir"
 class IPV6_Eval():
     def __init__(self, 
                  gen_choice: bool,
+                 eval_choice: bool,
                  debug: bool         = False, 
                  num_packets: int    = 1, 
                  address: str | None = None,
@@ -43,6 +44,7 @@ class IPV6_Eval():
             Output: None
         """
         self.gen_choice = gen_choice
+        self.eval_choice = eval_choice
 
         self.debug       = debug
         self.num_packets = num_packets
@@ -94,7 +96,7 @@ class IPV6_Eval():
             if self.debug: print(f"========= Packet {self.packet_id} =========")
 
             self.decode_ipv6()
-            self.send_packet()
+            self.send_packet() if self.eval_choice == 0 else self.send_packet_via_astar()
             
             # time.sleep(self.sleep_time)
             if self.debug: self.report_time()
@@ -231,6 +233,124 @@ class IPV6_Eval():
             
             packet_file.write(json.dumps(packet) + "\n")
 
+    def send_packet_via_astar(self,
+                              bits = 1,
+                              obs_perc = 0.4):
+        mapping = {1:3,
+                   2:2,
+                   3:1,
+                   4:0}
+        def heuristic(current, goal):
+            """
+            Manhattan distance heuristic for 8D space.
+            """
+            return sum(abs(current[i] - goal[i]) for i in range(2))
+        
+        def generate_desti_address(source_pure):
+            desti_string = []
+            for group in source_pure:
+                newgroup = group[:(bits-4)*-1]
+                while len(newgroup) < 4:
+                    newgroup += random.choice("0123456789ABCDEF")
+                desti_string.append(newgroup)
+            return desti_string
+
+        def generate_neighbors(dim=2):
+            directions = []
+            for d in range(dim):
+                temp = [0 for _ in range(dim)]
+                temp[d] += 1
+                directions.append(tuple(temp))
+                temp[d] -= 2
+                directions.append(tuple(temp))
+            return directions
+        
+        def generate_obstacles(graph):
+            count = 0
+            while count < (((16**bits)**2)*obs_perc):
+                node_choice = [random.randint(0,16**bits-1), random.randint(0,16**bits-1)]
+                if graph[node_choice[0]][node_choice[1]] == 0:
+                    graph[node_choice[0]][node_choice[1]] = random.randint(1,15)
+                    count += 1
+
+        def show(graph):
+            for row in graph:
+                newrow = []
+                for node in row:
+                    newrow.append(str(node) if len(str(node)) == 2 else '0' + str(node) if node not in ['D', 'S', 'P'] else str(node) + str(node))
+                # print(f"{[node for node in row if len(str(node)) == 2]}\n")
+                print(newrow)
+                print()
+
+        # TEMP HARDCODED IPV6
+        source_pure = ['A953', '006D', '0FAA', '0088', '000A', '0005', '878D', '6B51']
+        # destin_pure = ['A95E', '0061', '0FA1', '008A', '0A02', '0A0C', '8A81', '6A5B']  # 1 bit
+        # destin_pure = ['A9EE', '0011', '0F11', '00AA', '0A22', '0ACC', '8A11', '6A8B']  # 2 bits
+        # destin_pure = ["2001", "0DB8", "85A3", "0000", "0000", "8A2E", "0370", "7334"]
+
+        # source_pure = self.expand_address
+        destin_pure = generate_desti_address(source_pure)
+
+        start = tuple([int(group[((bits-4)*-1):], 16) for group in source_pure])
+        desti = tuple([int(group[((bits-4)*-1):], 16) for group in destin_pure])
+        print(f"START ====== {start}")
+        print(f"GOAL  ====== {desti}")
+        print()
+
+        for idx in range(0,len(source_pure)-1,2):
+            if self.debug: print(f"====== g{idx}:g{idx+1} =====")
+            graph = [[0 for _ in range(16**bits)] for __ in range(16**bits)]
+            self.start_node = (start[idx], start[idx+1])
+            self.desti_node = (desti[idx], desti[idx+1])
+            graph[self.start_node[0]][self.start_node[1]] = 'S'
+            graph[self.desti_node[0]][self.desti_node[1]] = 'D'
+            generate_obstacles(graph)
+            if self.debug: show(graph)
+
+
+            open_set = []
+            heapq.heappush(open_set, (0, self.start_node))
+            came_from = {}
+            
+            g_score = {self.start_node: 0}  # Cost from start to each node
+            f_score = {self.start_node: heuristic(self.start_node, self.desti_node)}  # Estimated total cost
+
+            directions = generate_neighbors(dim=2)
+            
+            cost = 0
+            while open_set:
+                _, current = heapq.heappop(open_set)
+
+                if current == self.desti_node:
+                    path = []
+                    while current in came_from:
+                        path.append(current)
+                        cost += graph[current[0]][current[1]] if graph[current[0]][current[1]] not in ['S', 'D'] \
+                                                              else 0
+                        graph[current[0]][current[1]] = 'P' if graph[current[0]][current[1]] != 'D' else 'D'
+                        current = came_from[current]
+                    path.append(self.start_node)
+                    if self.debug: print(f"PATH == {path}")
+                    if self.debug: show(graph)
+                    break
+
+        
+                for dx, dy in directions:
+                    neighbor = (current[0] + dx, current[1] + dy)
+
+                    if 0 <= neighbor[0] < len(graph) and 0 <= neighbor[1] < len(graph[0]):
+                        tent_g_score = g_score[current] + 1
+
+                        if neighbor not in g_score or tent_g_score < g_score[neighbor]:
+                            came_from[neighbor] = current
+                            g_score[neighbor] = tent_g_score + (graph[neighbor[0]][neighbor[1]] if graph[neighbor[0]][neighbor[1]] not in ['S', 'D']\
+                                                                                                else 0)
+                            f_score[neighbor] = tent_g_score + heuristic(neighbor, self.desti_node)
+                            heapq.heappush(open_set, (f_score[neighbor], neighbor))
+
+            if self.debug: print(f"Cost: {cost}")
+            if self.debug: print()
+
     def report_time(self,
                     final: bool = False):
         """
@@ -239,9 +359,9 @@ class IPV6_Eval():
                 final (bool) : Final flag
             Output: None
         """
-        self.total_time = f"{(time.perf_counter()-self.true_start_time-self.true_print_time):.1f}"
+        self.total_time = f"{(time.perf_counter()-self.true_start_time-self.true_print_time):.6f}"
         # self.average_time = f"{(time.perf_counter()-self.true_start_time-self.true_print_time)/(self.num_packets):.1f}"
-        self.gen_time = f"{self.generator_time:.1f}"
+        self.gen_time = f"{self.generator_time:.6f}"
         print(f"Time elapsed: {(time.perf_counter()-self.start_time-self.print_time):.6f} seconds" if not final else\
             #   f"Total time  : {(time.perf_counter()-self.true_start_time-self.true_print_time):.6f} seconds \nAverage time: {(time.perf_counter()-self.true_start_time-self.true_print_time)/(self.num_packets):.6f} seconds\nGenerator time: {self.generator_time:.6f} seconds\n") 
               f"Total time  : {(time.perf_counter()-self.true_start_time-self.true_print_time):.6f} seconds \nGenerator time: {self.generator_time:.6f} seconds\n") 
@@ -294,24 +414,26 @@ class IPV6_Eval():
 
 
 def main(args):
-    number_of_packets = [1,10,100,1000,2000,4000,6000,8000,10000,50000,100000,500000,1000000]
-    # number_of_packets = [1,10,100]
+    number_of_packets = [1,10,100,1000,5000,10000,50000,100000,200000,300000,400000,500000]
+    # number_of_packets = [1,10,100,1000,10000]  
     total_execution_time = []
     generator_execution_time = []
     generator_percentage = []
     for n in number_of_packets:
         print(f"--------------------- {n} Packets ---------------------")
         ipv6_eval = IPV6_Eval(gen_choice  = args.generator,
+                              eval_choice = args.evaluation,
                               debug       = args.debug,    
                               num_packets = n)
         total, generator = ipv6_eval.execute()
         total_execution_time.append(float(total))
         generator_execution_time.append(float(generator))
-        generator_percentage.append(round(float(generator)/float(total) if float(total) > 0.0 else 0.0, 4) * 100.0)
+        generator_percentage.append(round(float(generator)/float(total) if float(total) > 0.0 else 1.0, 4) * 100.0)
 
         ipv6_eval.cleanup()
 
     print(total_execution_time)
+    print(generator_execution_time)
     # print(generator_execution_time)
     # plt.figure(figsize=(8, 5))
     # plt.plot(number_of_packets, total_execution_time, marker='o', linestyle='-', color='blue', label='Execution Time')

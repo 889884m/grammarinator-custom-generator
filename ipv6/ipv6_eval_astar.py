@@ -210,87 +210,111 @@ class IPV6_Eval():
             self.print_time += time.perf_counter() - start
 
 
-    def send_packet_via_astar(self):
+    def send_packet_via_astar(self,
+                              bits = 1,
+                              obs_perc = 0.4):
+        mapping = {1:3,
+                   2:2,
+                   3:1,
+                   4:0}
         def heuristic(current, goal):
             """
             Manhattan distance heuristic for 8D space.
             """
             return sum(abs(current[i] - goal[i]) for i in range(len(current)))
 
-        def generate_neighbors(position):
-            """
-            Generate all neighbors of an 8D position.
-            """
-            neighbors = []
-            deltas = [-1, 0, 1]
-            for delta in [(dx1, dx2, dx3, dx4, dx5, dx6, dx7, dx8) for dx1 in deltas for dx2 in deltas
-                        for dx3 in deltas for dx4 in deltas for dx5 in deltas for dx6 in deltas
-                        for dx7 in deltas for dx8 in deltas]:
-                if any(delta):  # Skip the point itself
-                    neighbors.append(tuple(position[i] + delta[i] for i in range(8)))
-            return neighbors
+        def generate_neighbors(dim=2):
+            directions = []
+            for d in range(dim):
+                temp = [0 for _ in range(dim)]
+                temp[d] += 1
+                directions.append(tuple(temp))
+                temp[d] -= 2
+                directions.append(tuple(temp))
+            return directions
+        
+        def generate_obstacles(graph):
+            count = 0
+            while count < (((16**bits)**2)*obs_perc):
+                node_choice = [random.randint(0,16**bits-1), random.randint(0,16**bits-1)]
+                if graph[node_choice[0]][node_choice[1]] == 0:
+                    graph[node_choice[0]][node_choice[1]] = random.randint(1,15)
+                    count += 1
+
+        def show(graph):
+            for row in graph:
+                newrow = []
+                for node in row:
+                    newrow.append(str(node) if len(str(node)) == 2 else '0' + str(node) if node not in ['D', 'S', 'P'] else str(node) + str(node))
+                # print(f"{[node for node in row if len(str(node)) == 2]}\n")
+                print(newrow)
+                print()
 
         # TEMP HARDCODED IPV6
         source_pure = ['A953', '006D', '0FAA', '0088', '000A', '0005', '878D', '6B51']
-        destin_pure = ['A95E', '0061', '0FA1', '008A', '0A02', '0A0C', '8A81', '6A5B']
+        # destin_pure = ['A95E', '0061', '0FA1', '008A', '0A02', '0A0C', '8A81', '6A5B']  # 1 bit
+        destin_pure = ['A9EE', '0011', '0F11', '00AA', '0A22', '0ACC', '8A11', '6A8B']  # 2 bits
         # destin_pure = ["2001", "0DB8", "85A3", "0000", "0000", "8A2E", "0370", "7334"]
 
-        start = tuple([int(group, 16) for group in source_pure])
-        goal =  tuple([int(group, 16) for group in destin_pure])
+        start = tuple([int(group[mapping[bits]:], 16) for group in source_pure])
+        desti = tuple([int(group[mapping[bits]:], 16) for group in destin_pure])
         print(f"START ====== {start}")
-        print(F"GOAL  ====== {goal}")
+        print(f"GOAL  ====== {desti}")
+        print()
 
-        start_node = Node(start)
-        goal_node = Node(goal)
+        for idx in range(0,len(source_pure)-1,2):
+            if self.debug: print(f"====== g{idx}:g{idx+1} =====")
+            graph = [[0 for _ in range(16**bits)] for __ in range(16**bits)]
+            self.start_node = (start[idx], start[idx+1])
+            self.desti_node = (desti[idx], desti[idx+1])
+            graph[self.start_node[0]][self.start_node[1]] = 'S'
+            graph[self.desti_node[0]][self.desti_node[1]] = 'D'
+            generate_obstacles(graph)
+            if self.debug: show(graph)
 
-        open_set = []
-        open_set_dict = {}
-        closed_set = {}
 
-        # Initialize the open set with the start node
-        heapq.heappush(open_set, start_node)
-        open_set_dict[start_node.position] = start_node
+            open_set = []
+            heapq.heappush(open_set, (0, self.start_node))
+            came_from = {}
+            
+            g_score = {self.start_node: 0}  # Cost from start to each node
+            f_score = {self.start_node: heuristic(self.start_node, self.desti_node)}  # Estimated total cost
 
-        counter = 0
-        while open_set:
-            current_node = heapq.heappop(open_set)
-            open_set_dict.pop(current_node.position, None)
-            counter += 1
-            if counter % 100 == 0:
-                print(f"{counter}:::{current_node.position}")
+            directions = generate_neighbors(dim=2)
+            
+            cost = 0
+            while open_set:
+                _, current = heapq.heappop(open_set)
 
-            if current_node == goal_node:
-                # Reconstruct the path
-                path = []
-                while current_node:
-                    path.append(current_node.position)
-                    current_node = current_node.parent
-                return path[::-1]  # Reverse the path
+                if current == self.desti_node:
+                    path = []
+                    while current in came_from:
+                        path.append(current)
+                        cost += graph[current[0]][current[1]] if graph[current[0]][current[1]] not in ['S', 'D'] \
+                                                              else 0
+                        graph[current[0]][current[1]] = 'P' if graph[current[0]][current[1]] != 'D' else 'D'
+                        current = came_from[current]
+                    path.append(self.start_node)
+                    if self.debug: print(f"PATH == {path}")
+                    if self.debug: show(graph)
+                    break
 
-            closed_set[current_node.position] = current_node
+        
+                for dx, dy in directions:
+                    neighbor = (current[0] + dx, current[1] + dy)
 
-            # Generate neighbors
-            for neighbor_position in generate_neighbors(current_node.position):
-                if neighbor_position in closed_set:
-                    continue
+                    if 0 <= neighbor[0] < len(graph) and 0 <= neighbor[1] < len(graph[0]):
+                        tent_g_score = g_score[current] + 1
 
-                neighbor_node = Node(neighbor_position, current_node)
-                neighbor_node.g = current_node.g + 1
-                neighbor_node.h = heuristic(neighbor_position, goal_node.position)
-                neighbor_node.f = neighbor_node.g + neighbor_node.h
+                        if neighbor not in g_score or tent_g_score < g_score[neighbor]:
+                            came_from[neighbor] = current
+                            g_score[neighbor] = tent_g_score + (graph[neighbor[0]][neighbor[1]] if graph[neighbor[0]][neighbor[1]] not in ['S', 'D']\
+                                                                                                else 0)
+                            f_score[neighbor] = tent_g_score + heuristic(neighbor, self.desti_node)
+                            heapq.heappush(open_set, (f_score[neighbor], neighbor))
 
-                if neighbor_position in open_set_dict:
-                    # Skip if a better path already exists in the open set
-                    existing_node = open_set_dict[neighbor_position]
-                    if neighbor_node.g < existing_node.g:
-                        existing_node.g = neighbor_node.g
-                        existing_node.f = neighbor_node.f
-                        existing_node.parent = current_node
-                else:
-                    heapq.heappush(open_set, neighbor_node)
-                    open_set_dict[neighbor_position] = neighbor_node
-
-        return None  # No path found
+            if self.debug: print(f"Cost: {cost}")
+            if self.debug: print()
 
     def report_time(self,
                     final: bool = False):
@@ -353,35 +377,37 @@ class IPV6_Eval():
             if self.debug: print(f"All files removed from {IPV6_TEST_PACKET_DIR}")
 
 
-class Node:
-    def __init__(self, position, parent=None):
-        self.position = position  # 8D position as a tuple
-        self.parent = parent      # Parent node for path reconstruction
-        self.g = 0                # Cost from start to current node
-        self.h = 0                # Heuristic (estimated cost to goal)
-        self.f = 0                # Total cost (g + h)
+# class Node:
+#     def __init__(self, position, parent=None):
+#         self.position = position  # 8D position as a tuple
+#         self.parent = parent      # Parent node for path reconstruction
+#         self.g = 0                # Cost from start to current node
+#         self.h = 0                # Heuristic (estimated cost to goal)
+#         self.f = 0                # Total cost (g + h)
 
-    def __eq__(self, other):
-        return self.position == other.position
+#     def __eq__(self, other):
+#         return self.position == other.position
 
-    def __lt__(self, other):
-        return self.f < other.f
+#     def __lt__(self, other):
+#         return self.f < other.f
 
 
 def main(args):
     number_of_packets = [1,10,100,1000,2000,4000,6000,8000,10000,50000,100000,500000,1000000]
     # number_of_packets = [1,10,100,1000]
     total_execution_time = []
-    average_execution_time = []
     generator_execution_time = []
+    generator_percentage = []
     for n in number_of_packets:
         print(f"--------------------- {n} Packets ---------------------")
         ipv6_eval = IPV6_Eval(gen_choice  = args.generator,
                               debug       = args.debug,    
                               num_packets = n)
-        total, average, generator = ipv6_eval.execute()
+        total, generator = ipv6_eval.execute()
         total_execution_time.append(total)
         generator_execution_time.append(generator)
+        generator_percentage.append(round(float(generator)/float(total) if float(total) > 0.0 else 0.0, 4) * 100.0)
+
 
         ipv6_eval.cleanup()
 
@@ -404,9 +430,19 @@ def main(args):
     # plt.show()
 
     # Create the first graph
-    plt.figure(figsize=(10, 5))  # Set the figure size
-    plt.subplot(1, 2, 1)  # 1 row, 2 columns, 1st graph
+    y1_range, y2_range, y3_range = max(total_execution_time) - min(total_execution_time),max(generator_execution_time)- min(generator_execution_time), max(generator_percentage)- min(generator_percentage)
+    dy1, dy2, dy3 = 0.15 * y1_range, 0.15 * y2_range, 0.15 * y3_range
+    y1_min, y1_max = min(total_execution_time) - dy1, max(total_execution_time) + dy1
+    y2_min, y2_max = min(generator_execution_time) - dy2, max(generator_execution_time) + dy2
+    y3_min, y3_max = min(generator_percentage) -dy3, max(generator_percentage) + dy3
+
+    # print(y3_min,y3_max)
+    plt.figure(figsize=(15, 5))  # Set the figure size
+
+    plt.subplot(1, 3, 1)  # 1 row, 2 columns, 1st graph
+    # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
     plt.plot(number_of_packets, total_execution_time, marker='o', label='Execution Time', color='blue')
+    plt.ylim(y1_min, y1_max)  # Set consistent y-axis limits
     plt.title("Execution Time vs. Number of Packets")
     plt.xlabel('Number of Packets')
     plt.ylabel('Execution Time (s)')
@@ -414,11 +450,24 @@ def main(args):
     plt.grid(True)
 
     # Create the second graph
-    plt.subplot(1, 2, 2)  # 1 row, 2 columns, 2nd graph
-    plt.plot(number_of_packets, generator_execution_time, marker='s', label='Generation Time', color='green')
+    plt.subplot(1, 3, 2)  # 1 row, 2 columns, 2nd graph
+    # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
+    plt.plot(number_of_packets, generator_execution_time, marker='o', label='Generation Time', color='green')
+    plt.ylim(y2_min, y2_max)  # Set consistent y-axis limits
     plt.title("Generation Time vs. Number of Packets")
     plt.xlabel('Number of Packets')
     plt.ylabel('Generation Time (s)')
+    plt.legend()
+    plt.grid(True)
+
+    # Create the third  graph
+    plt.subplot(1, 3, 3)  # 1 row, 2 columns, 2nd graph
+    # plt.gca().set_aspect(plt.gca().get_data_ratio(), adjustable='datalim')
+    plt.plot(number_of_packets, generator_percentage, marker='o', label='Generation Time / Total Time', color='green')
+    plt.ylim(y3_min, y3_max)  # Set consistent y-axis limits
+    plt.title("Generation Time / Total Time vs. Number of Packets")
+    plt.xlabel('Number of Packets')
+    plt.ylabel('Generation Time / Total Time')
     plt.legend()
     plt.grid(True)
 
@@ -462,4 +511,4 @@ if __name__ == '__main__':
                             num_packets = args.packets)
     path = ipv6_eval.send_packet_via_astar()
     print(path)
-    print(len(path))
+    # print(len(path))
