@@ -16,8 +16,8 @@ accountId       : NUM NUM NUM NUM NUM NUM NUM NUM NUM NUM NUM NUM; // 12 digit A
 resourceType    : TEXT; // Alphanumeric resource type
 resourceId      : ( TEXT | '/' TEXT )+; // Resource ID can include slashes for nested resources
 
-TEXT            : [a-zA-Z0-9-]+
-NUM             : [0-9]
+TEXT            : [a-zA-Z0-9-]+;
+NUM             : [0-9];
 
 // WS              : [ \t\r\n]+ -> skip; // Skip whitespace
 

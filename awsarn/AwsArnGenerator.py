@@ -60,9 +60,20 @@ class AwsArnGenerator(Generator):
 
     def accountId(self, parent=None):
         with RuleContext(self, UnparserRule(name='accountId', parent=parent)) as current:
-            pass
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
+            self.NUM(parent=current)
             return current
-    accountId.min_depth = 0
+    accountId.min_depth = 1
 
     def resourceType(self, parent=None):
         with RuleContext(self, UnparserRule(name='resourceType', parent=parent)) as current:
@@ -92,9 +103,16 @@ class AwsArnGenerator(Generator):
             return current
     TEXT.min_depth = 0
 
+    def NUM(self, parent=None):
+        with RuleContext(self, UnlexerRule(name='NUM', parent=parent)) as current:
+            UnlexerRule(src=self._model.charset(current, 0, self._charsets[2]), parent=current)
+            return current
+    NUM.min_depth = 0
+
     _default_rule = start
 
     _charsets = {
         0: list(itertools.chain.from_iterable([range(32, 127)])),
         1: list(itertools.chain.from_iterable([range(45, 46), range(48, 58), range(65, 91), range(97, 123)])),
+        2: list(itertools.chain.from_iterable([range(48, 58)])),
     }
