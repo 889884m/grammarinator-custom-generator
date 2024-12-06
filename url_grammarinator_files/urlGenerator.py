@@ -40,7 +40,7 @@ class urlGenerator(Generator):
 
     def tld(self, parent=None):
         with RuleContext(self, UnparserRule(name='tld', parent=parent)) as current:
-            with AlternationContext(self, [0, 0, 0, 0, 2], [1, 1, 1, 1, 1]) as weights0:
+            with AlternationContext(self, [0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) as weights0:
                 choice0 = self._model.choice(current, 0, weights0)
                 if choice0 == 0:
                     UnlexerRule(src='com', parent=current)
@@ -51,6 +51,16 @@ class urlGenerator(Generator):
                 elif choice0 == 3:
                     UnlexerRule(src='gov', parent=current)
                 elif choice0 == 4:
+                    UnlexerRule(src='edu', parent=current)
+                elif choice0 == 5:
+                    UnlexerRule(src='mil', parent=current)
+                elif choice0 == 6:
+                    UnlexerRule(src='int', parent=current)
+                elif choice0 == 7:
+                    UnlexerRule(src='ru', parent=current)
+                elif choice0 == 8:
+                    UnlexerRule(src='uk', parent=current)
+                elif choice0 == 9:
                     self.phrase(parent=current)
                     UnlexerRule(src='.', parent=current)
             return current
@@ -58,7 +68,7 @@ class urlGenerator(Generator):
 
     def path(self, parent=None):
         with RuleContext(self, UnparserRule(name='path', parent=parent)) as current:
-            with AlternationContext(self, [2, 3], [1, 1]) as weights0:
+            with AlternationContext(self, [2, 2, 2], [1, 1, 1]) as weights0:
                 choice0 = self._model.choice(current, 0, weights0)
                 if choice0 == 0:
                     UnlexerRule(src='/', parent=current)
@@ -66,7 +76,11 @@ class urlGenerator(Generator):
                 elif choice0 == 1:
                     UnlexerRule(src='/', parent=current)
                     self.phrase(parent=current)
-                    self.path(parent=current)
+                    self.pathText(parent=current)
+                elif choice0 == 2:
+                    UnlexerRule(src='/', parent=current)
+                    self.TEXT(parent=current)
+                    self.phrase(parent=current)
             return current
     path.min_depth = 2
 
@@ -103,11 +117,19 @@ class urlGenerator(Generator):
             return current
     TEXT.min_depth = 0
 
+    def pathText(self, parent=None):
+        with RuleContext(self, UnparserRule(name='pathText', parent=parent)) as current:
+            with AlternationContext(self, [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]) as weights0:
+                choice0 = self._model.choice(current, 0, weights0)
+                UnlexerRule(src=['<', '>', '%', '&', '$'][choice0], parent=current)
+            return current
+    pathText.min_depth = 0
+
     def scheme(self, parent=None):
         with RuleContext(self, UnparserRule(name='scheme', parent=parent)) as current:
-            with AlternationContext(self, [0, 0], [1, 1]) as weights0:
+            with AlternationContext(self, [0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1]) as weights0:
                 choice0 = self._model.choice(current, 0, weights0)
-                UnlexerRule(src=['https://', 'http://'][choice0], parent=current)
+                UnlexerRule(src=['https://', 'http://', 'ftp://', 'file://', 'imap://', 'irc://'][choice0], parent=current)
             return current
     scheme.min_depth = 0
 
