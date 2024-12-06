@@ -7,11 +7,11 @@ import os
 from os.path import dirname, join
 
 # TLD list from ICANN
-with open(join(dirname(__file__), "../tld_list.json")) as f:
+with open(join(dirname(__file__), "tld_list.json")) as f:
     tld_list = json.load(f)
 
 # Schemes from IANA
-with open(join(dirname(__file__), "../scheme_list.json")) as f:
+with open(join(dirname(__file__), "scheme_list.json")) as f:
     schemes = json.load(f)
 
 
@@ -75,3 +75,8 @@ class myUrl():
         
 
         return lis
+
+
+# url = myUrl()
+
+# url.generateURL(10, 10)

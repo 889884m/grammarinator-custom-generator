@@ -8,7 +8,7 @@ Here are some basic commands to navigate and interact with the file system:
 ```bash
 # Generate Grammarinator tests
 cd url_grammarinator_files
-grammarinator-generate urlGenerator.urlGenerator --sys-path /Users/brooke_s/grammarinator-custom-generator/url_grammarinator_files -r url -d 10 -n 5
+grammarinator-generate urlGenerator.urlGenerator --sys-path /Users/brooke_s/grammarinator-custom-generator/URL/url_grammarinator_files -r url -d 10 -n 5
 ```
 ## MyURL Commands
 ```bash

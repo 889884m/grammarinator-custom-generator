@@ -21,4 +21,4 @@ print(len(custom_tests))
 
 
 for i in custom_tests:
-    urlChecker(i)
+    urlValidator(i)
