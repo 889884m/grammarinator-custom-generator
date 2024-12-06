@@ -526,9 +526,9 @@ def main(args):
 
                 ipv6_eval.cleanup()
 
-            print(total_execution_time)
-            print(generator_execution_time)
-            print(generator_percentage)
+            # print(total_execution_time)
+            # print(generator_execution_time)
+            # print(generator_percentage)
 
             avg_total.append(sum(total_execution_time)/len(total_execution_time))
             avg_gen_exec.append(sum(generator_execution_time)/len(generator_execution_time))
