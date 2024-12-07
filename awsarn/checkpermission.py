@@ -4,11 +4,11 @@ import json
 
 # Function to parse the ARN and identify the resource type
 def parse_arn(arn):
-    arn_regex = r"^arn:([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+):([a-z0-9\-]+):([0-9]{12}):([a-zA-Z0-9\-]+)(/.*)?$"
+    arn_regex = r"^arn:([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+):([0-9]{12}):([a-zA-Z0-9\-]+)(/.*)?$"
     match = re.match(arn_regex, arn)
     if not match:
         raise ValueError(f"Invalid ARN format: {arn}")
-    
+
     return match.groups()
 
 # Function to check S3 bucket permissions
@@ -21,14 +21,14 @@ def check_s3_permissions(bucket_name):
         print(f"Bucket {bucket_name} has a policy: {policy}")
     except s3_client.exceptions.NoSuchBucketPolicy:
         print(f"Bucket {bucket_name} has no policy.")
-    
+
     # Check for public access block
     public_access = s3_client.get_bucket_policy_status(Bucket=bucket_name)
     print(f"Public access blocked for bucket {bucket_name}: {public_access}")
 
 # Function to check EC2 instance permissions (basic example)
-def check_ec2_permissions(instance_id):
-    ec2_client = boto3.client('ec2')
+def check_ec2_permissions(instance_id, region):
+    ec2_client = boto3.client('ec2', region)
     try:
         instance = ec2_client.describe_instances(InstanceIds=[instance_id])
         if instance['Reservations']:
@@ -59,16 +59,16 @@ def audit_arn(arn):
         if service == 's3' and resource_type == 'bucket':
             check_s3_permissions(resource_id)
         elif service == 'ec2' and resource_type == 'instance':
-            check_ec2_permissions(resource_id)
+            check_ec2_permissions(resource_id, region)
         elif service == 'iam' and resource_type == 'role':
             check_iam_role_permissions(resource_id)
         else:
             print(f"Audit for resource type {resource_type} not implemented.")
-    
+
     except ValueError as e:
         print(f"Error: {e}")
 
-# Example ARNs for testing
+# Example custom ARNs for testing
 arn_examples = [
     'arn:aws:s3:::my-secure-bucket',
     'arn:aws:ec2:us-west-2:123456789012:instance/i-0abcdef1234567890',
@@ -79,3 +79,4 @@ arn_examples = [
 if __name__ == '__main__':
     for arn in arn_examples:
         audit_arn(arn)
+
