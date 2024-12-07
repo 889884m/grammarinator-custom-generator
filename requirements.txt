@@ -3,3 +3,5 @@ coverage
 matplotlib
 typing_extensions
 django
+rstr
+boto3
