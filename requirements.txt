@@ -1,4 +1,5 @@
 grammarinator
 coverage
+matplotlib
 typing_extensions
 django
