@@ -1,4 +1,4 @@
-from urlChecker import urlChecker
+from maliciousURLChecker import urlChecker
 import os
 
 def testsToList(direc):
@@ -14,11 +14,9 @@ def testsToList(direc):
 
 
 #for mine:
-#custom_tests = testsToList("/Users/brooke_s/grammarinator-custom-generator/url/tests")
+custom_tests = testsToList("/Users/brooke_s/grammarinator-custom-generator/url/custom_url_files/tests")
 #for grammarinator:
-custom_tests = testsToList("/Users/brooke_s/grammarinator-custom-generator/url_grammarinator_files/tests")
-print(len(custom_tests))
-
+#custom_tests = testsToList("/Users/brooke_s/grammarinator-custom-generator/url/url_grammarinator_files/tests")
 
 for i in custom_tests:
-    urlValidator(i)
+    urlChecker(i)

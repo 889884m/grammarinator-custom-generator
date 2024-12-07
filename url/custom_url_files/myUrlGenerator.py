@@ -76,7 +76,5 @@ class myUrl():
 
         return lis
 
-
-# url = myUrl()
-
-# url.generateURL(10, 10)
+url = myUrl()
+url.generateURL(10, 10)

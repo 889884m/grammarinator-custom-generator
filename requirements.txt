@@ -1,3 +1,4 @@
 grammarinator
 coverage
 typing_extensions
+django
